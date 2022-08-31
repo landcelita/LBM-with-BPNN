@@ -1,0 +1,19 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/home/lndclt/LBM-with-BPNN/src/"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/lndclt/LBM-with-BPNN/src/"
+    ],
+    "files.associations": {
+        "\"*.module\"": "\"php\"",
+        "*.class": "php",
+        "**/*.html": "html",
+        "**/templates/**/*.html": "django-html",
+        "**/templates/**/*": "django-txt",
+        "**/requirements{/**,*}.{txt,in}": "pip-requirements",
+        "*.py": "python",
+        "array": "cpp"
+    },
+    "search.useIgnoreFiles": true
+}
