@@ -13,7 +13,8 @@
         "**/templates/**/*": "django-txt",
         "**/requirements{/**,*}.{txt,in}": "pip-requirements",
         "*.py": "python",
-        "array": "cpp"
+        "array": "cpp",
+        "*.tcc": "cpp"
     },
     "search.useIgnoreFiles": true
 }
