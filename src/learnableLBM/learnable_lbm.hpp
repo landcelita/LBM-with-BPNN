@@ -1,3 +1,5 @@
+#ifndef LEARNABLE_LBM_HPP
+#define LEARNABLE_LBM_HPP
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
@@ -60,3 +62,5 @@ struct CollidedField {
     pyarr2d rho;
     pyarr4d f_eq;
 };
+
+#endif // LEARNABLE_LBM_HPP
