@@ -109,10 +109,34 @@ u_vert(u_vert_, 0, 0),  u_hori(u_hori_, 0, 0), rho(rho_, 0, 0), f(u_vert_.shape(
             double uv = u_vert.at(h, w);
             double uh = u_hori.at(h, w);
             double u2 = uv * uv + uh * uh;
-            for(int dh = 1; dh <= 1; dh++) for(int dw = 1; dw <= 1; dw++) {
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
                 double uprod = uv * dh + uh * dw;
                 f.mutable_at(h, w, dh, dw) = C.at(dh+1).at(dw+1) * rho.at(h, w) * ( 1 + (3.0 + 4.5 * uprod) * uprod - 1.5 * u2 );
             }
         }
     }
 };
+
+PYBIND11_MODULE(learnableLBM, m) {
+#ifndef TEST_MODE
+#else
+    m.doc() = "Learnable LBM TEST Module";
+
+    py::class_<pyarr2d>(m, "pyarr2d")
+        .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t, const double>())
+        .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>())
+        .def_readwrite("arr", &pyarr2d::arr);
+
+    py::class_<pyarr4d>(m, "pyarr4d")
+        .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t, const double>())
+        .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>())
+        .def_readwrite("arr", &pyarr4d::arr);
+
+    py::class_<InputField>(m, "InputField")
+        .def(py::init<const py::array_t<double>, const py::array_t<double>, const py::array_t<double>>())
+        .def_readwrite("u_vert", &InputField::u_vert)
+        .def_readwrite("u_hori", &InputField::u_hori)
+        .def_readwrite("rho", &InputField::rho)
+        .def_readwrite("f", &InputField::f);
+#endif
+}
