@@ -16,5 +16,6 @@
         "array": "cpp",
         "*.tcc": "cpp"
     },
-    "search.useIgnoreFiles": true
+    "search.useIgnoreFiles": true,
+    "C_Cpp.dimInactiveRegions": false
 }
