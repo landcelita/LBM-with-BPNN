@@ -2,6 +2,7 @@
 #define LEARNABLE_LBM_HPP
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 
 namespace py = pybind11;
 
@@ -49,6 +50,9 @@ struct StreamedField {
     pyarr4d f;
     pyarr2d u_vert, u_hori;
     pyarr2d rho;
+
+    StreamedField(const ssize_t rows, const ssize_t cols);
+    void stream(pyarr4d f_0, pyarr4d w_0, pyarr4d w_1);
 };
 
 struct CollidingWeight {

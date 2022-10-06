@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 #include "learnable_lbm.hpp"
 
 // 座標は(h, w) hは下向き正に注意!! (速度も同様)
@@ -21,7 +22,7 @@ pyarr4d::pyarr4d(const ssize_t rows, const ssize_t cols, const ssize_t forbidden
 }
 
 pyarr4d::pyarr4d(const py::array_t<double> arr_, const ssize_t forbidden_rows, const ssize_t forbidden_cols) {
-    shape = std::vector<ssize_t>{ arr_.shape(0), arr_.shape(1) };
+    shape = std::vector<ssize_t>{ arr_.shape(0), arr_.shape(1), 3, 3 };
     forbidden_at = std::vector<ssize_t>{ forbidden_rows, forbidden_cols };
     arr = py::array_t<double>(arr_);
 }
@@ -215,12 +216,16 @@ PYBIND11_MODULE(learnableLBM, m) {
     py::class_<pyarr2d>(m, "pyarr2d")
         .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t, const double>())
         .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>())
-        .def_readwrite("arr", &pyarr2d::arr);
+        .def_readwrite("arr", &pyarr2d::arr)
+        .def_readwrite("shape", &pyarr2d::shape)
+        .def_readwrite("forbidden_at", &pyarr2d::forbidden_at);
 
     py::class_<pyarr4d>(m, "pyarr4d")
         .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t, const double>())
         .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>())
-        .def_readwrite("arr", &pyarr4d::arr);
+        .def_readwrite("arr", &pyarr4d::arr)
+        .def_readwrite("shape", &pyarr4d::shape)
+        .def_readwrite("forbidden_at", &pyarr4d::forbidden_at);
 
     py::class_<InputField>(m, "InputField")
         .def(py::init<const py::array_t<double>, const py::array_t<double>, const py::array_t<double>>())
