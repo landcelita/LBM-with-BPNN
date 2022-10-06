@@ -118,8 +118,9 @@ u_vert(u_vert_, 0, 0),  u_hori(u_hori_, 0, 0), rho(rho_, 0, 0), f(u_vert_.shape(
     }
 };
 
-StreamedField::StreamedField(const ssize_t rows, const ssize_t cols) :
-f(rows, cols, 0, 0, 0.0), u_vert(rows, cols, 0, 0, 0.0), u_hori(rows, cols, 0, 0, 0.0), rho(rows, cols, 0, 0, 0.0) { }
+StreamedField::StreamedField(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols) :
+f(rows, cols, forbidden_rows, forbidden_cols, 0.0), u_vert(rows, cols, forbidden_rows, forbidden_cols, 0.0),
+u_hori(rows, cols, forbidden_rows, forbidden_cols, 0.0), rho(rows, cols, forbidden_rows, forbidden_cols, 0.0) { }
 
 void StreamedField::stream(pyarr4d f_0, pyarr4d w_0, pyarr4d w_1) {
     if(!(f.shape == f_0.shape && f_0.shape == w_0.shape && w_0.shape == w_1.shape)) {
@@ -139,8 +140,11 @@ void StreamedField::stream(pyarr4d f_0, pyarr4d w_0, pyarr4d w_1) {
         throw py::attribute_error();
     }
 
-    f.forbidden_at[0] = f_0.forbidden_at[0] + 1;
-    f.forbidden_at[1] = f_0.forbidden_at[1] + 1;
+    if(f.forbidden_at[0] != f_0.forbidden_at[0] + 1 || f.forbidden_at[1] != f_0.forbidden_at[1] + 1) {
+        py::print("f.forbidden_at != f_0.forbidden_at + 1, at line", __LINE__);
+        throw py::attribute_error();
+    }
+
     rho.forbidden_at = u_vert.forbidden_at = u_hori.forbidden_at = f.forbidden_at;
 
     for(int h = f.forbidden_at[0]; h < f.shape[0] - f.forbidden_at[0]; h++) {
@@ -159,8 +163,9 @@ void StreamedField::stream(pyarr4d f_0, pyarr4d w_0, pyarr4d w_1) {
     }
 }
 
-CollidedField::CollidedField(const ssize_t rows, const ssize_t cols) :
-f(rows, cols, 0, 0, 0.0), u_vert(rows, cols, 0, 0, 0.0), u_hori(rows, cols, 0, 0, 0.0), rho(rows, cols, 0, 0, 0.0), f_eq(rows, cols, 0, 0, 0.0) {}
+CollidedField::CollidedField(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols) :
+f(rows, cols, forbidden_rows, forbidden_cols, 0.0), u_vert(rows, cols, forbidden_rows, forbidden_cols, 0.0), u_hori(rows, cols, forbidden_rows, forbidden_cols, 0.0),
+rho(rows, cols, forbidden_rows, forbidden_cols, 0.0), f_eq(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
 
 void CollidedField::collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, pyarr4d w_4) {
     if(!(f.shape == f_1.shape && f_1.shape == w_1.shape && w_1.shape == w_2.shape && w_2.shape == w_3.shape && w_3.shape == w_4.shape)) {
@@ -168,8 +173,9 @@ void CollidedField::collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, 
         throw py::attribute_error();
     }
 
-    if(!(f_1.forbidden_at == w_1.forbidden_at && w_1.forbidden_at == w_2.forbidden_at && w_2.forbidden_at == w_3.forbidden_at && w_3.forbidden_at == w_4.forbidden_at)) {
-        py::print("forbidden_ats of f_1, w_1, w_2, w_3 and w_4 are must be the same, at line", __LINE__);
+    if(!(f.forbidden_at == f_1.forbidden_at && f_1.forbidden_at == w_1.forbidden_at && w_1.forbidden_at == w_2.forbidden_at 
+        && w_2.forbidden_at == w_3.forbidden_at && w_3.forbidden_at == w_4.forbidden_at)) {
+        py::print("forbidden_ats of f, f_1, w_1, w_2, w_3 and w_4 are must be the same, at line", __LINE__);
         throw py::attribute_error();
     }
 
@@ -235,7 +241,7 @@ PYBIND11_MODULE(learnableLBM, m) {
         .def_readwrite("f", &InputField::f);
 
     py::class_<StreamedField>(m, "StreamedField")
-        .def(py::init<const ssize_t, const ssize_t>())
+        .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t>())
         .def("stream", &StreamedField::stream)
         .def_readwrite("f", &StreamedField::f)
         .def_readwrite("u_vert", &StreamedField::u_vert)
@@ -243,13 +249,16 @@ PYBIND11_MODULE(learnableLBM, m) {
         .def_readwrite("rho", &StreamedField::rho);
     
     py::class_<CollidedField>(m, "CollidedField")
-        .def(py::init<const ssize_t, const ssize_t>())
+        .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t>())
         .def("collide", &CollidedField::collide)
         .def_readwrite("f", &CollidedField::f)
         .def_readwrite("u_vert", &CollidedField::u_vert)
         .def_readwrite("u_hori", &CollidedField::u_hori)
         .def_readwrite("rho", &CollidedField::rho)
         .def_readwrite("f_eq", &CollidedField::f_eq);
+
+    // py::class_<StreamingWeight>(m, "StreamingWeight")
+    //     .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t>());
 
 #endif
 }

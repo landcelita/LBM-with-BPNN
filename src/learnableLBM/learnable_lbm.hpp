@@ -44,6 +44,8 @@ public:
 struct StreamingWeight {
     pyarr4d w0, w1;
     pyarr4d delta;
+
+    StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
 };
 
 struct StreamedField {
@@ -51,7 +53,7 @@ struct StreamedField {
     pyarr2d u_vert, u_hori;
     pyarr2d rho;
 
-    StreamedField(const ssize_t rows, const ssize_t cols);
+    StreamedField(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
     void stream(pyarr4d f_0, pyarr4d w_0, pyarr4d w_1);
 };
 
@@ -66,7 +68,7 @@ struct CollidedField {
     pyarr2d rho;
     pyarr4d f_eq;
 
-    CollidedField(const ssize_t rows, const ssize_t cols);
+    CollidedField(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
     void collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, pyarr4d w_4);
 };
 
