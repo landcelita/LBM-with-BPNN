@@ -61,6 +61,9 @@ struct CollidedField {
     pyarr2d u_vert, u_hori;
     pyarr2d rho;
     pyarr4d f_eq;
+
+    CollidedField(const ssize_t rows, const ssize_t cols);
+    void collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, pyarr4d w_4);
 };
 
 #endif // LEARNABLE_LBM_HPP
