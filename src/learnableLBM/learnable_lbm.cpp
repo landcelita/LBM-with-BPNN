@@ -93,7 +93,7 @@ double pyarr2d::at(const int h, const int w) const {
 
 
 InputField::InputField(const py::array_t<double> u_vert_, const py::array_t<double> u_hori_, const py::array_t<double> rho_) : 
-u_vert(u_vert_, 0, 0),  u_hori(u_hori_, 0, 0), rho(rho_, 0, 0), f(u_vert_.shape(0), u_vert_.shape(1), 0, 0, 0.0)
+f(u_vert_.shape(0), u_vert_.shape(1), 0, 0, 0.0), u_vert(u_vert_, 0, 0),  u_hori(u_hori_, 0, 0), rho(rho_, 0, 0)
 {
     if(u_vert_.ndim() != 2 || u_hori_.ndim() != 2 || rho_.ndim() != 2) {
         py::print("ndims of u_vert, u_hori, rho are must be 2, at line", __LINE__);
@@ -214,6 +214,16 @@ void CollidedField::collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, 
     }
 }
 
+StreamingWeight::StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols):
+w0(rows, cols, forbidden_rows, forbidden_cols, 0.0), w1(rows, cols, forbidden_rows, forbidden_cols, 1.0), delta(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
+
+std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_vert_next, pyarr2d u_hori_next, pyarr2d u_vert_ans, pyarr2d u_hori_ans) {
+    return {pyarr4d(0, 0, 0, 0, 0.0), pyarr4d(0, 0, 0, 0, 0.0)};
+};
+
+void StreamingWeight::update(pyarr4d dw0, pyarr4d dw1) {
+}
+
 PYBIND11_MODULE(learnableLBM, m) {
 #ifndef TEST_MODE
 #else
@@ -257,8 +267,13 @@ PYBIND11_MODULE(learnableLBM, m) {
         .def_readwrite("rho", &CollidedField::rho)
         .def_readwrite("f_eq", &CollidedField::f_eq);
 
-    // py::class_<StreamingWeight>(m, "StreamingWeight")
-    //     .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t>());
+    py::class_<StreamingWeight>(m, "StreamingWeight")
+        .def(py::init<const ssize_t, const ssize_t, const ssize_t, const ssize_t>())
+        .def_readwrite("w0", &StreamingWeight::w0)
+        .def_readwrite("w1", &StreamingWeight::w1)
+        .def_readwrite("delta", &StreamingWeight::delta)
+        .def("set_delta_and_get_dw", &StreamingWeight::set_delta_and_get_dw)
+        .def("update", &StreamingWeight::update);
 
 #endif
 }

@@ -46,6 +46,8 @@ struct StreamingWeight {
     pyarr4d delta;
 
     StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
+    std::pair<pyarr4d, pyarr4d> set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_vert_next, pyarr2d u_hori_next, pyarr2d u_vert_ans, pyarr2d u_hori_ans);
+    void update(pyarr4d dw0, pyarr4d dw1);
 };
 
 struct StreamedField {
