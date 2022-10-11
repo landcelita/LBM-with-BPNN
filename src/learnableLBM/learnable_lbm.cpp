@@ -218,7 +218,38 @@ StreamingWeight::StreamingWeight(const ssize_t rows, const ssize_t cols, const s
 w0(rows, cols, forbidden_rows, forbidden_cols, 0.0), w1(rows, cols, forbidden_rows, forbidden_cols, 1.0), delta(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
 
 std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_vert_next, pyarr2d u_hori_next, pyarr2d u_vert_ans, pyarr2d u_hori_ans) {
-    return {pyarr4d(0, 0, 0, 0, 0.0), pyarr4d(0, 0, 0, 0, 0.0)};
+    if(!(rho_next.shape == u_vert_next.shape && u_vert_next.shape == u_hori_next.shape && u_hori_next.shape == u_vert_ans.shape && u_vert_ans.shape == u_hori_ans.shape
+    && f_prev.shape[0] == rho_next.shape[0] && f_prev.shape[1] == rho_next.shape[1]
+    && w0.shape == w1.shape && w1.shape == delta.shape && delta.shape == f_prev.shape)) {
+        py::print("all arg's shapes are must be the same, at line", __LINE__);
+        throw py::attribute_error();
+    }
+
+    if(!(rho_next.forbidden_at == u_vert_next.forbidden_at && u_vert_next.forbidden_at == u_hori_next.forbidden_at && u_hori_next.forbidden_at == u_vert_ans.forbidden_at && u_vert_ans.forbidden_at == u_hori_ans.forbidden_at
+    && f_prev.forbidden_at[0] == rho_next.forbidden_at[0] - 1 && f_prev.forbidden_at[1] == rho_next.forbidden_at[1] - 1
+    && w0.forbidden_at == w1.forbidden_at && w1.forbidden_at == delta.forbidden_at && delta.forbidden_at == u_hori_ans.forbidden_at)) {
+        py::print("arg's forbidden_at is illigal, at line", __LINE__);
+        throw py::attribute_error();
+    }
+
+    pyarr4d dw0(w0.shape[0], w0.shape[1], w0.forbidden_at[0], w0.forbidden_at[1], 0.0);
+    pyarr4d dw1(w0.shape[0], w0.shape[1], w0.forbidden_at[0], w0.forbidden_at[1], 0.0);
+
+    for(int h = delta.forbidden_at[0]; h < delta.shape[0] - delta.forbidden_at[0]; h++) {
+        for(int w = delta.forbidden_at[1]; w < delta.shape[1] - delta.forbidden_at[1]; w++) {
+            double inv_rho = 1 / rho_next.at(h, w);
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) delta.mutable_at(h, w, dh, dw) = inv_rho;
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                delta.mutable_at(h, w, dh, dw) *= 
+                    (u_vert_next.at(h, w) - u_vert_ans.at(h, w)) * (dh - u_vert_next.at(h, w)) 
+                    + (u_hori_next.at(h, w) - u_hori_ans.at(h, w)) * (dw - u_hori_next.at(h, w));
+                dw0.mutable_at(h, w, dh, dw) = -eta * delta.at(h, w, dh, dw);
+                dw1.mutable_at(h, w, dh, dw) = dw0.at(h, w, dh, dw) * f_prev.at(h - dh, w - dw, dh, dw);
+            }
+        }
+    }
+
+    return {dw0, dw1};
 };
 
 void StreamingWeight::update(pyarr4d dw0, pyarr4d dw1) {
