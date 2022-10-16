@@ -217,17 +217,17 @@ void CollidedField::collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, 
 StreamingWeight::StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols):
 w0(rows, cols, forbidden_rows, forbidden_cols, 0.0), w1(rows, cols, forbidden_rows, forbidden_cols, 1.0), delta(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
 
-std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_vert_next, pyarr2d u_hori_next, pyarr2d u_vert_ans, pyarr2d u_hori_ans) {
-    if(!(rho_next.shape == u_vert_next.shape && u_vert_next.shape == u_hori_next.shape && u_hori_next.shape == u_vert_ans.shape && u_vert_ans.shape == u_hori_ans.shape
+std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr2d u_ans_vert, pyarr2d u_ans_hori) {
+    if(!(rho_next.shape == u_next_vert.shape && u_next_vert.shape == u_next_hori.shape && u_next_hori.shape == u_ans_vert.shape && u_ans_vert.shape == u_ans_hori.shape
     && f_prev.shape[0] == rho_next.shape[0] && f_prev.shape[1] == rho_next.shape[1]
     && w0.shape == w1.shape && w1.shape == delta.shape && delta.shape == f_prev.shape)) {
         py::print("all arg's shapes are must be the same, at line", __LINE__);
         throw py::attribute_error();
     }
 
-    if(!(rho_next.forbidden_at == u_vert_next.forbidden_at && u_vert_next.forbidden_at == u_hori_next.forbidden_at && u_hori_next.forbidden_at == u_vert_ans.forbidden_at && u_vert_ans.forbidden_at == u_hori_ans.forbidden_at
+    if(!(rho_next.forbidden_at == u_next_vert.forbidden_at && u_next_vert.forbidden_at == u_next_hori.forbidden_at && u_next_hori.forbidden_at == u_ans_vert.forbidden_at && u_ans_vert.forbidden_at == u_ans_hori.forbidden_at
     && f_prev.forbidden_at[0] == rho_next.forbidden_at[0] - 1 && f_prev.forbidden_at[1] == rho_next.forbidden_at[1] - 1
-    && w0.forbidden_at == w1.forbidden_at && w1.forbidden_at == delta.forbidden_at && delta.forbidden_at == u_hori_ans.forbidden_at)) {
+    && w0.forbidden_at == w1.forbidden_at && w1.forbidden_at == delta.forbidden_at && delta.forbidden_at == u_ans_hori.forbidden_at)) {
         py::print("arg's forbidden_at is illigal, at line", __LINE__);
         throw py::attribute_error();
     }
@@ -241,8 +241,8 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, py
             for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) delta.mutable_at(h, w, dh, dw) = inv_rho;
             for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
                 delta.mutable_at(h, w, dh, dw) *= 
-                    (u_vert_next.at(h, w) - u_vert_ans.at(h, w)) * (dh - u_vert_next.at(h, w)) 
-                    + (u_hori_next.at(h, w) - u_hori_ans.at(h, w)) * (dw - u_hori_next.at(h, w));
+                    (u_next_vert.at(h, w) - u_ans_vert.at(h, w)) * (dh - u_next_vert.at(h, w)) 
+                    + (u_next_hori.at(h, w) - u_ans_hori.at(h, w)) * (dw - u_next_hori.at(h, w));
                 dw0.mutable_at(h, w, dh, dw) = -eta * delta.at(h, w, dh, dw);
                 dw1.mutable_at(h, w, dh, dw) = dw0.at(h, w, dh, dw) * f_prev.at(h - dh, w - dw, dh, dw);
             }

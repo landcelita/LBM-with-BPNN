@@ -46,7 +46,7 @@ struct StreamingWeight {
     pyarr4d delta;
 
     StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
-    std::pair<pyarr4d, pyarr4d> set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_vert_next, pyarr2d u_hori_next, pyarr2d u_vert_ans, pyarr2d u_hori_ans);
+    std::pair<pyarr4d, pyarr4d> set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr2d u_ans_vert, pyarr2d u_ans_hori);
     void update(pyarr4d dw0, pyarr4d dw1);
 };
 
@@ -62,6 +62,10 @@ struct StreamedField {
 struct CollidingWeight {
     pyarr4d w1, w2, w3, w4;
     pyarr4d delta;
+
+    CollidingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
+    std::tuple<pyarr4d, pyarr4d, pyarr4d, pyarr4d> set_delta_and_get_dw(double eta, pyarr2d rho_prev, pyarr2d u_prev_vert, pyarr2d u_prev_hori, pyarr4d delta_next, pyarr4d w_next_1);
+    void update(pyarr4d dw1, pyarr4d dw2, pyarr4d dw3, pyarr4d dw4);
 };
 
 struct CollidedField {
