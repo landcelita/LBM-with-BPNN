@@ -2294,7 +2294,7 @@ class TestStreamingWeight(unittest.TestCase):
 
 class TestCollidingWeight(unittest.TestCase):
     def test_set_delta_and_get_dw(self):
-        arg_eta = 1.0
+        arg_eta = 0.1
         arg_rho_prev_nparr = np.array([
             [0.0000000000000000,0.0000000000000000,0.0000000000000000,0.0000000000000000,],
             [257.7300000000000182,170.8400000000000318,175.5099999999999625,235.5399999999999636,],
@@ -3132,10 +3132,10 @@ def isequal_pyarr4d(x, y):
         return False
     # pprint.pprint(x.arr[xforbiddenH:-xforbiddenH, xforbiddenW:-xforbiddenW, :, :])
     # pprint.pprint(y.arr[yforbiddenH:-yforbiddenH, yforbiddenW:-yforbiddenW, :, :])
-    np.testing.assert_array_almost_equal(x.arr[xforbiddenH:-xforbiddenH, xforbiddenW:-xforbiddenW, :, :],
-        y.arr[yforbiddenH:-yforbiddenH, yforbiddenW:-yforbiddenW, :, :])
-    return np.allclose(x.arr[xforbiddenH:-xforbiddenH, xforbiddenW:-xforbiddenW, :, :], 
-        y.arr[yforbiddenH:-yforbiddenH, yforbiddenW:-yforbiddenW, :, :])
+    np.testing.assert_array_almost_equal(x.arr[xforbiddenH:xH-xforbiddenH, xforbiddenW:xW-xforbiddenW, :, :],
+        y.arr[yforbiddenH:yH-yforbiddenH, yforbiddenW:yW-yforbiddenW, :, :])
+    return np.allclose(x.arr[xforbiddenH:xH-xforbiddenH, xforbiddenW:xW-xforbiddenW, :, :], 
+        y.arr[yforbiddenH:yH-yforbiddenH, yforbiddenW:yW-yforbiddenW, :, :])
 
 def isequal_pyarr2d(x, y):
     xH, xW = x.shape[0], x.shape[1]
@@ -3147,10 +3147,10 @@ def isequal_pyarr2d(x, y):
         return False
     if xforbiddenH != yforbiddenH or xforbiddenW != yforbiddenW:
         return False
-    np.testing.assert_array_almost_equal(x.arr[xforbiddenH:-xforbiddenH, xforbiddenW:-xforbiddenW],
-        y.arr[yforbiddenH:-yforbiddenH, yforbiddenW:-yforbiddenW])
-    return np.allclose(x.arr[xforbiddenH:-xforbiddenH, xforbiddenW:-xforbiddenW], 
-        y.arr[yforbiddenH:-yforbiddenH, yforbiddenW:-yforbiddenW])
+    np.testing.assert_array_almost_equal(x.arr[xforbiddenH:xH-xforbiddenH, xforbiddenW:xW-xforbiddenW],
+        y.arr[yforbiddenH:yH-yforbiddenH, yforbiddenW:yW-yforbiddenW])
+    return np.allclose(x.arr[xforbiddenH:xH-xforbiddenH, xforbiddenW:xW-xforbiddenW], 
+        y.arr[yforbiddenH:yH-yforbiddenH, yforbiddenW:yW-yforbiddenW])
 
 
 if __name__ == "__main__":
