@@ -74,7 +74,9 @@ void LearnableLBM::backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_a
         colliding_weight.w4
     );
 
-    // TODO: update
+    streaming_weight_2.update(streaming_weight_2_dw0, streaming_weight_2_dw1);
+    colliding_weight.update(colliding_weight_dw1, colliding_weight_dw2, colliding_weight_dw3, colliding_weight_dw4);
+    streaming_weight_1.update(streaming_weight_1_dw0, streaming_weight_1_dw1);
 
     is_dw_set = false;
 };
@@ -432,6 +434,14 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(
 }
 
 void StreamingWeight::update(const pyarr4d& dw0, const pyarr4d& dw1) {
+    for(int h = w1.forbidden_at[0]; h < w1.shape[0] - w1.forbidden_at[0]; h++) {
+        for(int w = w1.forbidden_at[1]; w < w1.shape[1] - w1.forbidden_at[1]; w++) {
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                w0.mutable_at(h, w, dh, dw) += dw0.at(h, w, dh, dw);
+                w1.mutable_at(h, w, dh, dw) += dw1.at(h, w, dh, dw);
+            }
+        }
+    }
 }
 
 CollidingWeight::CollidingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols):
@@ -503,6 +513,16 @@ std::tuple<pyarr4d, pyarr4d, pyarr4d, pyarr4d> CollidingWeight::set_delta_and_ge
 }
 
 void CollidingWeight::update(const pyarr4d& dw1, const pyarr4d& dw2, const pyarr4d& dw3, const pyarr4d& dw4) {
+    for(int h = w1.forbidden_at[0]; h < w1.shape[0] - w1.forbidden_at[0]; h++) {
+        for(int w = w1.forbidden_at[1]; w < w1.shape[1] - w1.forbidden_at[1]; w++) {
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                w1.mutable_at(h, w, dh, dw) += dw1.at(h, w, dh, dw);
+                w2.mutable_at(h, w, dh, dw) += dw2.at(h, w, dh, dw);
+                w3.mutable_at(h, w, dh, dw) += dw3.at(h, w, dh, dw);
+                w4.mutable_at(h, w, dh, dw) += dw4.at(h, w, dh, dw);
+            }
+        }
+    }
 }
 
 PYBIND11_MODULE(learnableLBM, m) {
