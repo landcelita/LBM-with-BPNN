@@ -6,28 +6,6 @@
 
 namespace py = pybind11;
 
-struct LearnableLBM {
-private:
-    bool is_dw_set;
-    pyarr4d streaming_weight_1_dw0, streaming_weight_1_dw1;
-    pyarr4d colliding_weight_dw1, colliding_weight_dw2, colliding_weight_dw3, colliding_weight_dw4;
-    pyarr4d streaming_weight_2_dw0, streaming_weight_2_dw1;
-
-public:
-    std::vector<ssize_t> shape;
-    InputField input_field;
-    StreamingWeight streaming_weight_1;
-    StreamedField streamed_field_1;
-    CollidingWeight colliding_weight;
-    CollidedField collided_field;
-    StreamingWeight streaming_weight_2;
-    StreamedField streamed_field_2; // output_field
-
-    LearnableLBM(const ssize_t rows, const ssize_t cols);
-    void forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_);
-    void backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_ans_hori_);
-};
-
 struct pyarr4d {
 public:
     std::vector<ssize_t> shape;
@@ -125,6 +103,28 @@ struct CollidedField {
 
     CollidedField(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
     void collide(const pyarr4d& f_1, const pyarr4d& w_1, const pyarr4d& w_2, const pyarr4d& w_3, const pyarr4d& w_4);
+};
+
+struct LearnableLBM {
+private:
+    bool is_dw_set;
+    pyarr4d streaming_weight_1_dw0, streaming_weight_1_dw1;
+    pyarr4d colliding_weight_dw1, colliding_weight_dw2, colliding_weight_dw3, colliding_weight_dw4;
+    pyarr4d streaming_weight_2_dw0, streaming_weight_2_dw1;
+
+public:
+    std::vector<ssize_t> shape;
+    InputField input_field;
+    StreamingWeight streaming_weight_1;
+    StreamedField streamed_field_1;
+    CollidingWeight colliding_weight;
+    CollidedField collided_field;
+    StreamingWeight streaming_weight_2;
+    StreamedField streamed_field_2; // output_field
+
+    LearnableLBM(const ssize_t rows, const ssize_t cols);
+    void forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_);
+    void backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_ans_hori_);
 };
 
 #endif // LEARNABLE_LBM_HPP
