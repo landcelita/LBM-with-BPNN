@@ -527,6 +527,18 @@ void CollidingWeight::update(const pyarr4d& dw1, const pyarr4d& dw2, const pyarr
 
 PYBIND11_MODULE(learnableLBM, m) {
 #ifndef TEST_MODE
+    m.doc() = "Learnable LBM Module";
+
+    py::class_<pyarr2d>(m, "pyarr2d")
+        .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>());
+
+    py::class_<pyarr4d>(m, "pyarr4d")
+        .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>());
+
+    py::class_<LearnableLBM>(m, "LearnableLBM")
+        .def(py::init<const ssize_t, const ssize_t>())
+        .def("forward", &LearnableLBM::forward)
+        .def("backward", &LearnableLBM::backward);
 #else
     m.doc() = "Learnable LBM TEST Module";
 
