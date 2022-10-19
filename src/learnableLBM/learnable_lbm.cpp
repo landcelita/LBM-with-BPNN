@@ -191,7 +191,7 @@ StreamedField::StreamedField(const ssize_t rows, const ssize_t cols, const ssize
 f(rows, cols, forbidden_rows, forbidden_cols, 0.0), u_vert(rows, cols, forbidden_rows, forbidden_cols, 0.0),
 u_hori(rows, cols, forbidden_rows, forbidden_cols, 0.0), rho(rows, cols, forbidden_rows, forbidden_cols, 0.0) { }
 
-void StreamedField::stream(pyarr4d f_0, pyarr4d w_0, pyarr4d w_1) {
+void StreamedField::stream(const pyarr4d& f_0, const pyarr4d& w_0, const pyarr4d& w_1) {
     if(!(f.shape == f_0.shape && f_0.shape == w_0.shape && w_0.shape == w_1.shape)) {
         py::print("shapes of f, f_0, w_0, and w_1 are must be the same, at line", __LINE__);
         py::print("f.shape: ", f.shape[0], f.shape[1], f.shape[2], f.shape[3]);
@@ -236,7 +236,7 @@ CollidedField::CollidedField(const ssize_t rows, const ssize_t cols, const ssize
 f(rows, cols, forbidden_rows, forbidden_cols, 0.0), u_vert(rows, cols, forbidden_rows, forbidden_cols, 0.0), u_hori(rows, cols, forbidden_rows, forbidden_cols, 0.0),
 rho(rows, cols, forbidden_rows, forbidden_cols, 0.0), f_eq(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
 
-void CollidedField::collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, pyarr4d w_4) {
+void CollidedField::collide(const pyarr4d& f_1, const pyarr4d& w_1, const pyarr4d& w_2, const pyarr4d& w_3, const pyarr4d& w_4) {
     if(!(f.shape == f_1.shape && f_1.shape == w_1.shape && w_1.shape == w_2.shape && w_2.shape == w_3.shape && w_3.shape == w_4.shape)) {
         py::print("shapes of f, f_1, w_1, w_2, w_3, w_4 are must be the same, at line", __LINE__);
         throw py::attribute_error();
@@ -286,7 +286,14 @@ void CollidedField::collide(pyarr4d f_1, pyarr4d w_1, pyarr4d w_2, pyarr4d w_3, 
 StreamingWeight::StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols):
 w0(rows, cols, forbidden_rows, forbidden_cols, 0.0), w1(rows, cols, forbidden_rows, forbidden_cols, 1.0), delta(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
 
-std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr2d u_ans_vert, pyarr2d u_ans_hori) {
+std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(
+        double eta,
+        const pyarr4d& f_prev,
+        const pyarr2d& rho_next,
+        const pyarr2d& u_next_vert,
+        const pyarr2d& u_next_hori,
+        const pyarr2d& u_ans_vert,
+        const pyarr2d& u_ans_hori) {
     if(!(rho_next.shape == u_next_vert.shape &&
         u_next_vert.shape == u_next_hori.shape &&
         u_next_hori.shape == u_ans_vert.shape && 
@@ -328,7 +335,18 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, py
     return {dw0, dw1};
 };
 
-std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4){
+std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(
+        double eta,
+        const pyarr4d& f_prev,
+        const pyarr2d& rho_next,
+        const pyarr2d& u_next_vert,
+        const pyarr2d& u_next_hori,
+        const pyarr4d& f_next_next_eq,
+        const pyarr4d& delta_next,
+        const pyarr4d& w_next_1,
+        const pyarr4d& w_next_2, 
+        const pyarr4d& w_next_3, 
+        const pyarr4d& w_next_4){
     if(!(f_prev.shape == rho_next.shape && 
         rho_next.shape == u_next_vert.shape &&
         u_next_vert.shape == u_next_hori.shape &&
@@ -423,7 +441,14 @@ w3(rows, cols, forbidden_rows, forbidden_cols, 4.5),
 w4(rows, cols, forbidden_rows, forbidden_cols, -1.5),
 delta(rows, cols, forbidden_rows, forbidden_cols, 0.0) {}
 
-std::tuple<pyarr4d, pyarr4d, pyarr4d, pyarr4d> CollidingWeight::set_delta_and_get_dw(double eta, pyarr2d rho_prev, pyarr2d u_prev_vert, pyarr2d u_prev_hori, pyarr4d delta_next, pyarr4d w_next_1){
+std::tuple<pyarr4d, pyarr4d, pyarr4d, pyarr4d> CollidingWeight::set_delta_and_get_dw(
+        double eta,
+        const pyarr2d& rho_prev,
+        const pyarr2d& u_prev_vert,
+        const pyarr2d& u_prev_hori,
+        const pyarr4d& delta_next,
+        const pyarr4d& w_next_1
+    ){
     if(!(
         rho_prev.shape == u_prev_vert.shape &&
         u_prev_vert.shape == u_prev_hori.shape &&
