@@ -260,8 +260,86 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, py
 };
 
 std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4){
+    if(!(f_prev.shape == rho_next.shape && 
+        rho_next.shape == u_next_vert.shape &&
+        u_next_vert.shape == u_next_hori.shape &&
+        u_next_hori.shape == f_next_eq.shape && 
+        f_next_eq.shape == w_next_1.shape &&
+        w_next_1.shape == w_next_2.shape &&
+        w_next_2.shape == w_next_3.shape &&
+        w_next_3.shape == w_next_4.shape &&
+        w0.shape == f_prev.shape)) {
+        py::print("all arg's shapes are must be the same, at line", __LINE__);
+        throw py::attribute_error();
+    }
+
+    if(!(rho_next.forbidden_at == u_next_vert.forbidden_at && 
+        u_next_vert.forbidden_at == u_next_hori.forbidden_at && 
+        u_next_hori.forbidden_at == f_next_eq.forbidden_at && 
+        f_next_eq.forbidden_at == delta_next.forbidden_at && 
+        delta_next.forbidden_at == w_next_1.forbidden_at && 
+        w_next_1.forbidden_at == w_next_2.forbidden_at && 
+        w_next_2.forbidden_at == w_next_3.forbidden_at && 
+        w_next_3.forbidden_at == w_next_4.forbidden_at && 
+        f_prev.forbidden_at[0] == rho_next.forbidden_at[0] - 1 && 
+        f_prev.forbidden_at[1] == rho_next.forbidden_at[1] - 1 && 
+        w0.forbidden_at == u_next_vert.forbidden_at)) {
+        py::print("arg's forbidden_at is illigal, at line", __LINE__);
+        throw py::attribute_error();
+    }
+    
     pyarr4d dw0(w0.shape[0], w0.shape[1], w0.forbidden_at[0], w0.forbidden_at[1], 0.0);
     pyarr4d dw1(w0.shape[0], w0.shape[1], w0.forbidden_at[0], w0.forbidden_at[1], 0.0);
+
+    for(int h = delta.forbidden_at[0]; h < delta.shape[0] - delta.forbidden_at[0]; h++) {
+        for(int w = delta.forbidden_at[1]; w < delta.shape[1] - delta.forbidden_at[1]; w++) {
+            double sum0 = 0.0, sum1_vert = 0.0, sum1_hori = 0.0, sum2_vert = 0.0, sum2_hori = 0.0, sum3_vert = 0.0, sum3_hori = 0.0, sum4_vert = 0.0, sum4_hori = 0.0;
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                sum0 += delta_next.at(h, w, dh, dw) * f_next_eq.at(h, w, dh, dw);
+            }
+            sum0 /= 2.0 * rho_next.at(h, w);
+
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                sum1_vert += (dh == 0 ? 0.0 : delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_1.at(h, w, dh, dw) * dh);
+                sum1_hori += (dw == 0 ? 0.0 : delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_1.at(h, w, dh, dw) * dw);
+            }
+            sum1_vert *= 0.5 * rho_next.at(h, w);
+            sum1_hori *= 0.5 * rho_next.at(h, w);
+            
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                sum2_vert += (dh == 0 ? 0.0 : delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_2.at(h, w, dh, dw) * dh);
+                sum2_hori += (dw == 0 ? 0.0 : delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_2.at(h, w, dh, dw) * dw);
+            }
+            sum2_vert *= 0.5 * rho_next.at(h, w);
+            sum2_hori *= 0.5 * rho_next.at(h, w);
+
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                sum3_vert += (dh == 0 ? 0.0 : delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_3.at(h, w, dh, dw) * (dh * u_next_vert.at(h, w) + dw * u_next_hori.at(h, w)) * dh);
+                sum3_hori += (dw == 0 ? 0.0 : delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_3.at(h, w, dh, dw) * (dh * u_next_vert.at(h, w) + dw * u_next_hori.at(h, w)) * dw);
+            }
+            sum3_vert *= rho_next.at(h, w);
+            sum3_hori *= rho_next.at(h, w);
+
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                sum4_vert += delta_next.at(h, w, dh, dw) * C[dh+1][dw+1] * w_next_4.at(h, w, dh, dw);
+            }
+            sum4_hori = sum4_vert;
+            sum4_vert *= rho_next.at(h, w) * u_next_vert.at(h, w);
+            sum4_hori *= rho_next.at(h, w) * u_next_hori.at(h, w);
+
+            double sum_1_3_4_vert = sum1_vert + sum3_vert + sum4_vert;
+            double sum_1_3_4_hori = sum1_hori + sum3_hori + sum4_hori;
+            double rho_inv = 1 / rho_next.at(h, w);
+            for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
+                delta.mutable_at(h, w, dh, dw) = 0.5 * delta_next.at(h, w, dh, dw) + sum0 + rho_inv * (
+                    sum_1_3_4_vert * (dh - u_next_vert.at(h, w)) + sum_1_3_4_hori * (dw - u_next_hori.at(h, w))
+                    + sum2_vert * (dw - u_next_hori.at(h, w)) - sum2_hori * (dh - u_next_vert.at(h, w))
+                );
+                dw0.mutable_at(h, w, dh, dw) = -eta * delta.at(h, w, dh, dw);
+                dw1.mutable_at(h, w, dh, dw) = -eta * delta.at(h, w, dh, dw) * f_prev.at(h - dh, w - dw, dh, dw);
+            }
+        }
+    }
 
     return {dw0, dw1};
 }
