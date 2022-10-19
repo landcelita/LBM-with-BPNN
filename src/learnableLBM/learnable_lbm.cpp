@@ -259,6 +259,13 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, py
     return {dw0, dw1};
 };
 
+std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4){
+    pyarr4d dw0(w0.shape[0], w0.shape[1], w0.forbidden_at[0], w0.forbidden_at[1], 0.0);
+    pyarr4d dw1(w0.shape[0], w0.shape[1], w0.forbidden_at[0], w0.forbidden_at[1], 0.0);
+
+    return {dw0, dw1};
+}
+
 void StreamingWeight::update(const pyarr4d& dw0, const pyarr4d& dw1) {
 }
 
@@ -375,6 +382,7 @@ PYBIND11_MODULE(learnableLBM, m) {
         .def_readwrite("w1", &StreamingWeight::w1)
         .def_readwrite("delta", &StreamingWeight::delta)
         .def("set_delta_and_get_dw", &StreamingWeight::set_delta_and_get_dw)
+        .def("set_delta_and_get_dw", &StreamingWeight::set_delta_and_get_dw_2)
         .def("update", &StreamingWeight::update);
 
     py::class_<CollidingWeight>(m, "CollidingWeight")
