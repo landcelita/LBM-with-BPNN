@@ -12,6 +12,73 @@ std::vector<std::vector<double>> C = {
     {1.0 / 36.0,    1.0 / 9.0,  1.0 / 36.0}
 };
 
+LearnableLBM::LearnableLBM(const ssize_t rows, const ssize_t cols):
+is_dw_set(false),
+streaming_weight_1_dw0(rows, cols, 1, 1, 0.0), streaming_weight_1_dw1(rows, cols, 1, 1, 0.0),
+colliding_weight_dw1(rows, cols, 1, 1, 0.0), colliding_weight_dw2(rows, cols, 1, 1, 0.0), colliding_weight_dw3(rows, cols, 1, 1, 0.0), colliding_weight_dw4(rows, cols, 1, 1, 0.0),
+streaming_weight_2_dw0(rows, cols, 2, 2, 0.0), streaming_weight_2_dw1(rows, cols, 2, 2, 0.0),
+shape({rows, cols}),
+input_field(rows, cols),
+streaming_weight_1(rows, cols, 1, 1),
+streamed_field_1(rows, cols, 1, 1),
+colliding_weight(rows, cols, 1, 1),
+collided_field(rows, cols, 1, 1),
+streaming_weight_2(rows, cols, 2, 2),
+streamed_field_2(rows, cols, 2, 2)
+{};
+
+// FIXME: 引数はbackwardにあわせてpyarr2dにするべきだと思う
+void LearnableLBM::forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_) {
+    is_dw_set = true;
+
+    input_field = InputField(u_vert_, u_hori_, rho_);
+    streamed_field_1.stream(input_field.f, streaming_weight_1.w0, streaming_weight_1.w1);
+    collided_field.collide(streamed_field_1.f, colliding_weight.w1, colliding_weight.w2, colliding_weight.w3, colliding_weight.w4);
+    streamed_field_2.stream(collided_field.f, streaming_weight_2.w0, streaming_weight_2.w1);
+}
+
+void LearnableLBM::backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_ans_hori_){
+    if(!is_dw_set) {
+        py::print("first forward()");
+        throw py::attribute_error();
+    }
+
+    std::tie(streaming_weight_2_dw0, streaming_weight_2_dw1) = streaming_weight_2.set_delta_and_get_dw(
+        eta,
+        collided_field.f,
+        streamed_field_2.rho,
+        streamed_field_2.u_vert,
+        streamed_field_2.u_hori,
+        u_ans_vert_,
+        u_ans_hori_
+    );
+    std::tie(colliding_weight_dw1, colliding_weight_dw2, colliding_weight_dw3, colliding_weight_dw4) = colliding_weight.set_delta_and_get_dw(
+        eta,
+        streamed_field_1.rho,
+        streamed_field_1.u_vert,
+        streamed_field_1.u_hori,
+        streaming_weight_2.delta,
+        streaming_weight_2.w1
+    );
+    std::tie(streaming_weight_1_dw0, streaming_weight_1_dw1) = streaming_weight_1.set_delta_and_get_dw_2(
+        eta,
+        input_field.f,
+        streamed_field_1.rho,
+        streamed_field_1.u_vert,
+        streamed_field_1.u_hori,
+        collided_field.f_eq,
+        colliding_weight.delta,
+        colliding_weight.w1,
+        colliding_weight.w2,
+        colliding_weight.w3,
+        colliding_weight.w4
+    );
+
+    // TODO: update
+
+    is_dw_set = false;
+};
+
 pyarr4d::pyarr4d(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols, const double init) {
     shape = std::vector<ssize_t>{ rows, cols };
     forbidden_at = std::vector<ssize_t>{ forbidden_rows, forbidden_cols };
@@ -90,9 +157,11 @@ double pyarr2d::at(const int h, const int w) const {
     return arr.at(h, w);
 }
 
+InputField::InputField(const ssize_t rows, const ssize_t cols):
+f(rows, cols, 0, 0, 0.0), u_vert(rows, cols, 0, 0, 0.0),  u_hori(rows, cols, 0, 0, 0.0), rho(rows, cols, 0, 0, 0.0)
+{}
 
-
-InputField::InputField(const py::array_t<double> u_vert_, const py::array_t<double> u_hori_, const py::array_t<double> rho_) : 
+InputField::InputField(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_) : 
 f(u_vert_.shape(0), u_vert_.shape(1), 0, 0, 0.0), u_vert(u_vert_, 0, 0),  u_hori(u_hori_, 0, 0), rho(rho_, 0, 0)
 {
     if(u_vert_.ndim() != 2 || u_hori_.ndim() != 2 || rho_.ndim() != 2) {
@@ -259,12 +328,12 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw(double eta, py
     return {dw0, dw1};
 };
 
-std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4){
+std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4){
     if(!(f_prev.shape == rho_next.shape && 
         rho_next.shape == u_next_vert.shape &&
         u_next_vert.shape == u_next_hori.shape &&
-        u_next_hori.shape == f_next_eq.shape && 
-        f_next_eq.shape == w_next_1.shape &&
+        u_next_hori.shape == f_next_next_eq.shape && 
+        f_next_next_eq.shape == w_next_1.shape &&
         w_next_1.shape == w_next_2.shape &&
         w_next_2.shape == w_next_3.shape &&
         w_next_3.shape == w_next_4.shape &&
@@ -275,8 +344,8 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, 
 
     if(!(rho_next.forbidden_at == u_next_vert.forbidden_at && 
         u_next_vert.forbidden_at == u_next_hori.forbidden_at && 
-        u_next_hori.forbidden_at == f_next_eq.forbidden_at && 
-        f_next_eq.forbidden_at == delta_next.forbidden_at && 
+        u_next_hori.forbidden_at == f_next_next_eq.forbidden_at && 
+        f_next_next_eq.forbidden_at == delta_next.forbidden_at && 
         delta_next.forbidden_at == w_next_1.forbidden_at && 
         w_next_1.forbidden_at == w_next_2.forbidden_at && 
         w_next_2.forbidden_at == w_next_3.forbidden_at && 
@@ -295,7 +364,7 @@ std::pair<pyarr4d, pyarr4d> StreamingWeight::set_delta_and_get_dw_2(double eta, 
         for(int w = delta.forbidden_at[1]; w < delta.shape[1] - delta.forbidden_at[1]; w++) {
             double sum0 = 0.0, sum1_vert = 0.0, sum1_hori = 0.0, sum2_vert = 0.0, sum2_hori = 0.0, sum3_vert = 0.0, sum3_hori = 0.0, sum4_vert = 0.0, sum4_hori = 0.0;
             for(int dh = -1; dh <= 1; dh++) for(int dw = -1; dw <= 1; dw++) {
-                sum0 += delta_next.at(h, w, dh, dw) * f_next_eq.at(h, w, dh, dw);
+                sum0 += delta_next.at(h, w, dh, dw) * f_next_next_eq.at(h, w, dh, dw);
             }
             sum0 /= 2.0 * rho_next.at(h, w);
 

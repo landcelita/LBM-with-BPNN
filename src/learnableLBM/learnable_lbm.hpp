@@ -3,8 +3,31 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+// TODO: 引数にはなるべくconst &を使う(速度の問題)
 
 namespace py = pybind11;
+
+struct LearnableLBM {
+private:
+    bool is_dw_set;
+    pyarr4d streaming_weight_1_dw0, streaming_weight_1_dw1;
+    pyarr4d colliding_weight_dw1, colliding_weight_dw2, colliding_weight_dw3, colliding_weight_dw4;
+    pyarr4d streaming_weight_2_dw0, streaming_weight_2_dw1;
+
+public:
+    std::vector<ssize_t> shape;
+    InputField input_field;
+    StreamingWeight streaming_weight_1;
+    StreamedField streamed_field_1;
+    CollidingWeight colliding_weight;
+    CollidedField collided_field;
+    StreamingWeight streaming_weight_2;
+    StreamedField streamed_field_2; // output_field
+
+    LearnableLBM(const ssize_t rows, const ssize_t cols);
+    void forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_);
+    void backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_ans_hori_);
+};
 
 struct pyarr4d {
 public:
@@ -38,7 +61,8 @@ public:
     pyarr2d u_hori;
     pyarr2d rho;
 
-    InputField(const py::array_t<double> u_vert_, const py::array_t<double> u_hori_, const py::array_t<double> rho_);
+    InputField(const ssize_t rows, const ssize_t cols);
+    InputField(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_);
 };
 
 struct StreamingWeight {
@@ -47,7 +71,7 @@ struct StreamingWeight {
 
     StreamingWeight(const ssize_t rows, const ssize_t cols, const ssize_t forbidden_rows, const ssize_t forbidden_cols);
     std::pair<pyarr4d, pyarr4d> set_delta_and_get_dw(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr2d u_ans_vert, pyarr2d u_ans_hori);
-    std::pair<pyarr4d, pyarr4d> set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4);
+    std::pair<pyarr4d, pyarr4d> set_delta_and_get_dw_2(double eta, pyarr4d f_prev, pyarr2d rho_next, pyarr2d u_next_vert, pyarr2d u_next_hori, pyarr4d f_next_next_eq, pyarr4d delta_next, pyarr4d w_next_1, pyarr4d w_next_2, pyarr4d w_next_3, pyarr4d w_next_4);
     void update(const pyarr4d& dw0, const pyarr4d& dw1);
 };
 
