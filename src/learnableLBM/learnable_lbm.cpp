@@ -28,13 +28,15 @@ streamed_field_2(rows, cols, 2, 2)
 {};
 
 // FIXME: 引数はbackwardにあわせてpyarr2dにするべきだと思う
-void LearnableLBM::forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_) {
+std::pair<const pyarr2d&, const pyarr2d&> LearnableLBM::forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_) {
     is_dw_set = true;
 
     input_field = InputField(u_vert_, u_hori_, rho_);
     streamed_field_1.stream(input_field.f, streaming_weight_1.w0, streaming_weight_1.w1);
     collided_field.collide(streamed_field_1.f, colliding_weight.w1, colliding_weight.w2, colliding_weight.w3, colliding_weight.w4);
     streamed_field_2.stream(collided_field.f, streaming_weight_2.w0, streaming_weight_2.w1);
+
+    return {streamed_field_2.u_vert, streamed_field_2.u_hori};
 }
 
 void LearnableLBM::backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_ans_hori_){
@@ -97,7 +99,8 @@ pyarr4d::pyarr4d(const py::array_t<double> arr_, const ssize_t forbidden_rows, c
 }
 
 double& pyarr4d::mutable_at(const int h, const int w, const int dh, const int dw) {
-#ifdef TEST_MODE
+#ifndef TEST_MODE
+#else
     // 範囲内チェック
     if (h < forbidden_at[0] || shape[0] - forbidden_at[0] <= h || w < forbidden_at[1] || shape[1] - forbidden_at[1] <= w 
     || dh < -1 || dh > 1 || dw < -1 || dw > 1) {
@@ -110,7 +113,8 @@ double& pyarr4d::mutable_at(const int h, const int w, const int dh, const int dw
 }
 
 const double pyarr4d::at(const int h, const int w, const int dh, const int dw) const {
-#ifdef TEST_MODE        
+#ifndef TEST_MODE        
+#else
     // 範囲内チェック
     if (h < forbidden_at[0] || shape[0] - forbidden_at[0] <= h || w < forbidden_at[1] || shape[1] - forbidden_at[1] <= w 
     || dh < -1 || dh > 1 || dw < -1 || dw > 1) {
@@ -136,7 +140,8 @@ pyarr2d::pyarr2d(const py::array_t<double> arr_, const ssize_t forbidden_rows, c
 }
 
 double& pyarr2d::mutable_at(const int h, const int w) {
-#ifdef TEST_MODE
+#ifndef TEST_MODE
+#else
     // 範囲内チェック
     if (h < forbidden_at[0] || shape[0] - forbidden_at[0] <= h || w < forbidden_at[1] || shape[1] - forbidden_at[1] <= w) {
         py::print("index error at line", __LINE__, "in file ", __FILE__);
@@ -149,6 +154,7 @@ double& pyarr2d::mutable_at(const int h, const int w) {
 
 double pyarr2d::at(const int h, const int w) const {
 #ifdef TEST_MODE
+#else
     // 範囲内チェック
     if (h < forbidden_at[0] || shape[0] - forbidden_at[0] <= h || w < forbidden_at[1] || shape[1] - forbidden_at[1] <= w) {
         py::print("index error at line", __LINE__, "in file ", __FILE__);
@@ -203,8 +209,8 @@ void StreamedField::stream(const pyarr4d& f_0, const pyarr4d& w_0, const pyarr4d
         throw py::attribute_error();
     }
 
-    if(!(f_0.forbidden_at == w_0.forbidden_at && w_0.forbidden_at == w_1.forbidden_at)) {
-        py::print("forbidden_ats of f_0, w_0, and w_1 are must be the same, at line", __LINE__);
+    if(!(f_0.forbidden_at[0] == w_0.forbidden_at[0] - 1 && f_0.forbidden_at[1] == w_0.forbidden_at[1] - 1 && w_0.forbidden_at == w_1.forbidden_at)) {
+        py::print("arg's forbidden_at is illigal, at line", __LINE__);
         py::print("f_0.forbidden_at: ", f_0.forbidden_at[0], ", ", f_0.forbidden_at[1]);
         py::print("w_0.forbidden_at: ", w_0.forbidden_at[0], ", ", w_0.forbidden_at[1]);
         py::print("w_1.forbidden_at: ", w_1.forbidden_at[0], ", ", w_1.forbidden_at[1]);
@@ -530,7 +536,9 @@ PYBIND11_MODULE(learnableLBM, m) {
     m.doc() = "Learnable LBM Module";
 
     py::class_<pyarr2d>(m, "pyarr2d")
-        .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>());
+        .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>())
+        .def_readonly("arr", &pyarr2d::arr)
+        .def_readonly("forbidden_at", &pyarr2d::forbidden_at);
 
     py::class_<pyarr4d>(m, "pyarr4d")
         .def(py::init<const py::array_t<double>, const ssize_t, const ssize_t>());

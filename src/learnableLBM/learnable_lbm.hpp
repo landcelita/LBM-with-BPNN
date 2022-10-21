@@ -123,7 +123,7 @@ public:
     StreamedField streamed_field_2; // output_field
 
     LearnableLBM(const ssize_t rows, const ssize_t cols);
-    void forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_);
+    std::pair<const pyarr2d&, const pyarr2d&> forward(const py::array_t<double>& u_vert_, const py::array_t<double>& u_hori_, const py::array_t<double>& rho_);
     void backward(const double eta, pyarr2d& u_ans_vert_, pyarr2d& u_ans_hori_);
 };
 

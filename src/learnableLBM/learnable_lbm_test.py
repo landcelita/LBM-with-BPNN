@@ -211,8 +211,8 @@ class TestStreamedField(unittest.TestCase):
             ],
         ])
         arg_f0 = ll.pyarr4d(arg_f0_nparr, 0, 0)
-        arg_w0 = ll.pyarr4d(arg_w0_nparr, 0, 0)
-        arg_w1 = ll.pyarr4d(arg_w1_nparr, 0, 0)
+        arg_w0 = ll.pyarr4d(arg_w0_nparr, 1, 1)
+        arg_w1 = ll.pyarr4d(arg_w1_nparr, 1, 1)
         expected_f_nparr = np.array([
             [
                 [
@@ -786,8 +786,8 @@ class TestStreamedField(unittest.TestCase):
         ],
     ])
         arg_f0 = ll.pyarr4d(arg_f0_nparr, 1, 1)
-        arg_w0 = ll.pyarr4d(arg_w0_nparr, 1, 1)
-        arg_w1 = ll.pyarr4d(arg_w1_nparr, 1, 1)
+        arg_w0 = ll.pyarr4d(arg_w0_nparr, 2, 2)
+        arg_w1 = ll.pyarr4d(arg_w1_nparr, 2, 2)
         expected_f_nparr = np.array([
         [
             [
