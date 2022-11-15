@@ -3,6 +3,7 @@ from typing import List, Tuple
 import repository.repo as repo
 import datetime as dt
 import learnableLBM.learnableLBM as LBM
+import matplotlib.pyplot as plt
 import numpy as np
 
 # 入出力の取り回しは分離するべき?
@@ -63,11 +64,12 @@ def main():
             u_hori_x_nparr *= 0.01 # この定数の根拠はmax_wind_speed.py参照
             u_vert_y_nparr *= -0.01
             u_hori_y_nparr *= 0.01
+            pressure_x_nparr *= 0.0001
             u_vert_y = LBM.pyarr2d(u_vert_y_nparr, 2, 2) # この2がマジックナンバーでわかりずらそう
             u_hori_y = LBM.pyarr2d(u_hori_y_nparr, 2, 2)
             
             u_vert_got, u_hori_got = lbm.forward(u_vert_x_nparr, u_hori_x_nparr, pressure_x_nparr)
-            lbm.backward(0.25, u_vert_y, u_hori_y)
+            lbm.backward(0.5, u_vert_y, u_hori_y)
 
             forb = u_vert_got.forbidden_at
             err_u_vert += 100.0 * np.mean(np.abs(u_vert_got.arr[forb[0]:-forb[0], forb[1]:-forb[1]] - u_vert_y_nparr[forb[0]:-forb[0], forb[1]:-forb[1]]))

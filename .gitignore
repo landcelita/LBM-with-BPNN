@@ -2,3 +2,8 @@
 *.so
 data/
 *.pyc
+*.txt
+*.png
+target/
+**/*.rs.bk
+*.pdb
