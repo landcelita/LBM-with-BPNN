@@ -78,5 +78,8 @@
         "variant": "cpp"
     },
     "search.useIgnoreFiles": true,
-    "C_Cpp.dimInactiveRegions": false
+    "C_Cpp.dimInactiveRegions": false,
+    "rust-analyzer.linkedProjects": [
+        "./Cargo.toml",
+    ],
 }
